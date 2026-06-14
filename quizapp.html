@@ -1,0 +1,155 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz App</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --indigo: #6366F1;
+      --indigo-dark: #4F46E5;
+      --indigo-light: #A5B4FC;
+      --bg: #0F172A;
+      --surface: #1E293B;
+      --surface2: #273449;
+      --text: #F1F5F9;
+      --muted: #94A3B8;
+      --green: #22C55E;
+      --red: #EF4444;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+    .navbar-brand { font-size: 1.3rem; font-weight: 700; color: var(--indigo-light) !important; }
+    .navbar { background: var(--surface) !important; border-bottom: 1px solid var(--border); }
+    .score-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 16px; font-size: 0.85rem; color: var(--indigo-light); font-weight: 600; }
+    .progress { height: 4px; background: var(--surface2); border-radius: 0; }
+    .progress-bar { background: var(--indigo); transition: width 0.5s ease; }
+    .q-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+    .card-quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; animation: slideIn 0.35s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .question-text { font-size: 1.2rem; font-weight: 600; line-height: 1.5; color: var(--text); }
+    .timer-ring { width: 52px; height: 52px; border-radius: 50%; background: conic-gradient(var(--indigo) var(--pct, 100%), var(--surface2) 0%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .timer-inner { width: 40px; height: 40px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; color: var(--indigo-light); }
+    .timer-ring.warning { background: conic-gradient(var(--red) var(--pct, 100%), var(--surface2) 0%); }
+    .timer-ring.warning .timer-inner { color: var(--red); }
+    .option-btn { width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; color: var(--text); font-size: 0.95rem; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.1s; display: flex; align-items: center; gap: 12px; }
+    .option-btn:hover:not(:disabled) { border-color: var(--indigo); background: #1e2a45; transform: translateX(4px); }
+    .option-btn:disabled { cursor: default; }
+    .option-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+    .option-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); color: var(--red); }
+    .option-badge { width: 28px; height: 28px; border-radius: 6px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; color: var(--muted); }
+    .option-btn.correct .option-badge { background: var(--green); color: #fff; }
+    .option-btn.wrong .option-badge { background: var(--red); color: #fff; }
+    .feedback-bar { border-radius: 10px; padding: 12px 18px; font-size: 0.9rem; font-weight: 500; display: none; }
+    .feedback-bar.correct { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .feedback-bar.wrong { background: rgba(239,68,68,0.12); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
+    .btn-next { background: var(--indigo); color: #fff; border: none; border-radius: 10px; padding: 12px 28px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+    .btn-next:hover { background: var(--indigo-dark); transform: translateY(-1px); }
+    .btn-next:disabled { opacity: 0.4; cursor: default; transform: none; }
+    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 3rem 2rem; text-align: center; animation: slideIn 0.4s ease; }
+    .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--indigo); display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+    .score-big { font-size: 2.2rem; font-weight: 800; color: var(--indigo-light); line-height: 1; }
+    .stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; }
+    .btn-restart { background: var(--indigo); color: #fff; border: none; border-radius: 10px; padding: 14px 40px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .start-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 3rem 2rem; max-width: 480px; margin: 0 auto; animation: slideIn 0.4s ease; }
+    .info-row { display: flex; justify-content: center; gap: 24px; margin: 1.5rem 0; }
+    .info-val { font-size: 1.3rem; font-weight: 700; color: var(--indigo-light); }
+    .info-lbl { font-size: 0.75rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<nav class="navbar px-3 py-2">
+  <span class="navbar-brand">QuizMaster</span>
+  <span class="score-pill" id="nav-score">Score: 0</span>
+</nav>
+<div style="background: var(--surface); border-bottom: 1px solid var(--border);">
+  <div class="progress"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+</div>
+<div class="container py-4" style="max-width:620px;">
+  <div id="start-screen" class="text-center py-5">
+    <div class="start-card">
+      <div style="font-size:3.5rem; margin-bottom:1rem;">🧠</div>
+      <span style="background:rgba(99,102,241,0.15);color:var(--indigo-light);border:1px solid rgba(99,102,241,0.3);border-radius:999px;font-size:0.78rem;padding:4px 14px;font-weight:600;">General Knowledge</span>
+      <h1 style="font-size:1.8rem;font-weight:800;margin:1rem 0 0.5rem;">Think You Know It All?</h1>
+      <p style="color:var(--muted);">10 questions. 15 seconds each.</p>
+      <div class="info-row">
+        <div class="d-flex flex-column align-items-center gap-1"><span class="info-val">10</span><span class="info-lbl">Questions</span></div>
+        <div class="d-flex flex-column align-items-center gap-1"><span class="info-val">15s</span><span class="info-lbl">Per question</span></div>
+        <div class="d-flex flex-column align-items-center gap-1"><span class="info-val">+10</span><span class="info-lbl">Per correct</span></div>
+      </div>
+      <button class="btn-restart w-100" onclick="startQuiz()">Start Quiz</button>
+    </div>
+  </div>
+  <div id="quiz-screen" style="display:none;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <span class="q-label" id="q-counter">Question 1 of 10</span>
+      <div class="timer-ring" id="timer-ring"><div class="timer-inner" id="timer-text">15</div></div>
+    </div>
+    <div class="card-quiz mb-3"><p class="question-text" id="question-text"></p></div>
+    <div class="d-flex flex-column gap-2 mb-3" id="options-container"></div>
+    <div class="feedback-bar mb-3" id="feedback-bar"></div>
+    <div class="d-flex justify-content-end">
+      <button class="btn-next" id="next-btn" onclick="nextQuestion()" disabled>Next →</button>
+    </div>
+  </div>
+  <div id="result-screen" style="display:none;">
+    <div class="result-card">
+      <div class="score-circle"><span class="score-big" id="final-score">0</span><span style="font-size:0.8rem;color:var(--muted);">/ 100</span></div>
+      <p style="font-size:1.3rem;font-weight:700;margin-bottom:0.5rem;" id="result-msg"></p>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:2rem;" id="result-sub"></p>
+      <div class="row g-3 mb-4">
+        <div class="col-4"><div class="stat-box"><div class="stat-val" id="stat-correct" style="color:var(--green)">0</div><div style="font-size:0.75rem;color:var(--muted);">Correct</div></div></div>
+        <div class="col-4"><div class="stat-box"><div class="stat-val" id="stat-wrong" style="color:var(--red)">0</div><div style="font-size:0.75rem;color:var(--muted);">Wrong</div></div></div>
+        <div class="col-4"><div class="stat-box"><div class="stat-val" id="stat-skipped" style="color:var(--muted)">0</div><div style="font-size:0.75rem;color:var(--muted);">Skipped</div></div></div>
+      </div>
+      <button class="btn-restart" onclick="restartQuiz()">Play Again</button>
+    </div>
+  </div>
+</div>
+<script>
+  const questions = [
+    { q: "What is the capital city of Australia?", options: ["Sydney","Melbourne","Canberra","Brisbane"], answer: 2 },
+    { q: "How many bones are in the adult human body?", options: ["196","206","216","226"], answer: 1 },
+    { q: "Which planet is known as the Red Planet?", options: ["Venus","Jupiter","Saturn","Mars"], answer: 3 },
+    { q: "In which year did World War II end?", options: ["1943","1944","1945","1946"], answer: 2 },
+    { q: "What is the chemical symbol for Gold?", options: ["Go","Gd","Au","Ag"], answer: 2 },
+    { q: "Who painted the Mona Lisa?", options: ["Michelangelo","Leonardo da Vinci","Raphael","Donatello"], answer: 1 },
+    { q: "What is the largest ocean on Earth?", options: ["Atlantic","Indian","Arctic","Pacific"], answer: 3 },
+    { q: "How many sides does a hexagon have?", options: ["5","6","7","8"], answer: 1 },
+    { q: "Which country invented chess?", options: ["China","Egypt","India","Greece"], answer: 2 },
+    { q: "Speed of light (approx.) in km/s?", options: ["100,000","200,000","300,000","400,000"], answer: 2 }
+  ];
+  const LABELS = ['A','B','C','D'];
+  const TIME = 15;
+  let current=0, score=0, correct=0, wrong=0, skipped=0, answered=false, timer=null, timeLeft=TIME;
+  function startQuiz(){ current=0;score=0;correct=0;wrong=0;skipped=0; document.getElementById('start-screen').style.display='none'; document.getElementById('result-screen').style.display='none'; document.getElementById('quiz-screen').style.display='block'; updateNav(); loadQ(); }
+  function loadQ(){
+    answered=false; timeLeft=TIME; clearInterval(timer);
+    const q=questions[current];
+    document.getElementById('q-counter').textContent=`Question ${current+1} of ${questions.length}`;
+    document.getElementById('question-text').textContent=q.q;
+    document.getElementById('progress-bar').style.width=(current/questions.length*100)+'%';
+    document.getElementById('timer-ring').classList.remove('warning');
+    updateTimerUI();
+    const c=document.getElementById('options-container'); c.innerHTML='';
+    q.options.forEach((opt,i)=>{ const b=document.createElement('button'); b.className='option-btn'; b.innerHTML=`<span class="option-badge">${LABELS[i]}</span>${opt}`; b.onclick=()=>pick(i); c.appendChild(b); });
+    const fb=document.getElementById('feedback-bar'); fb.style.display='none'; fb.className='feedback-bar';
+    document.getElementById('next-btn').disabled=true;
+    timer=setInterval(()=>{ timeLeft--; updateTimerUI(); if(timeLeft<=0){ clearInterval(timer); if(!answered){ skipped++; expire(); } } },1000);
+  }
+  function updateTimerUI(){ const pct=(timeLeft/TIME*100)+'%'; const r=document.getElementById('timer-ring'); r.style.setProperty('--pct',pct); document.getElementById('timer-text').textContent=timeLeft; if(timeLeft<=5) r.classList.add('warning'); else r.classList.remove('warning'); }
+  function pick(sel){ if(answered)return; answered=true; clearInterval(timer); const q=questions[current]; const btns=document.querySelectorAll('.option-btn'); const fb=document.getElementById('feedback-bar'); btns.forEach((b,i)=>{ b.disabled=true; if(i===q.answer) b.classList.add('correct'); else if(i===sel) b.classList.add('wrong'); }); if(sel===q.answer){ score+=10; correct++; fb.className='feedback-bar correct'; fb.textContent='✓ Correct!'; } else { wrong++; fb.className='feedback-bar wrong'; fb.textContent=`✗ Wrong. Answer: ${q.options[q.answer]}`; } fb.style.display='block'; updateNav(); document.getElementById('next-btn').disabled=false; }
+  function expire(){ answered=true; const q=questions[current]; document.querySelectorAll('.option-btn').forEach((b,i)=>{ b.disabled=true; if(i===q.answer) b.classList.add('correct'); }); const fb=document.getElementById('feedback-bar'); fb.className='feedback-bar wrong'; fb.textContent=`⏱ Time up! Answer: ${q.options[q.answer]}`; fb.style.display='block'; document.getElementById('next-btn').disabled=false; }
+  function nextQuestion(){ current++; if(current>=questions.length) showResult(); else loadQ(); }
+  function showResult(){ document.getElementById('progress-bar').style.width='100%'; document.getElementById('quiz-screen').style.display='none'; document.getElementById('result-screen').style.display='block'; document.getElementById('final-score').textContent=score; document.getElementById('stat-correct').textContent=correct; document.getElementById('stat-wrong').textContent=wrong; document.getElementById('stat-skipped').textContent=skipped; let msg,sub; if(score===100){msg='🏆 Perfect!';sub='Every answer correct!';} else if(score>=80){msg='🔥 Outstanding!';sub='Almost perfect!';} else if(score>=60){msg='👍 Good Job!';sub='Solid performance!';} else if(score>=40){msg='📚 Keep Practicing!';sub='Room to grow.';} else {msg='😅 Try Again!';sub="Don't give up!";} document.getElementById('result-msg').textContent=msg; document.getElementById('result-sub').textContent=sub; }
+  function restartQuiz(){ startQuiz(); }
+  function updateNav(){ document.getElementById('nav-score').textContent='Score: '+score; }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
